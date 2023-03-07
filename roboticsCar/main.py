@@ -1,7 +1,9 @@
 import pygame
 import math
 import time
-
+import tensorflow as tf
+import numpy as np
+from tensorflow import keras
 
 
 def moveCar(speed, direction, car_position):
@@ -47,7 +49,7 @@ win_height = 3200*scale
 
 # create the window
 window = pygame.display.set_mode((win_width, win_height))
-pygame.display.set_caption("Car Game")
+pygame.display.set_caption("Car Sim")
 
 # set the background color
 background_color = (255, 255, 255)
