@@ -35,7 +35,7 @@ def calculateFeeler(car_pos, direction, offset):
 
     return outx, outy
 
-scale = 0.1
+scale = 0.35
 
 # initialize Pygame
 pygame.init()
