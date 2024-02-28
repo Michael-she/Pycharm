@@ -1,14 +1,14 @@
 import pygame
 import math
 import time
-import tensorflow as tf
+
 import numpy as np
 from tensorflow import keras
 
 
 def moveCar(speed, direction, car_position):
 
-
+    print(direction)
     angle_radians = math.radians(direction)
     sin_value = math.sin(angle_radians) * speed
     cos_value = math.cos(angle_radians) * speed
@@ -23,17 +23,6 @@ def moveCar(speed, direction, car_position):
     pygame.draw.rect(window, (255, 0, 0), car_rect)
 
     return car_x, car_y, speed, direction
-def calculateFeeler(car_pos, direction, offset):
-
-    length = 150
-
-    direction = direction + offset
-    angle_radians = math.radians(direction)
-    outy = car_pos[1]+ math.sin(angle_radians) * length
-    outx = car_pos[0] + math.cos(angle_radians) * length
-
-
-    return outx, outy
 
 scale = 0.35
 
@@ -65,96 +54,46 @@ car_height = 5
 # set the speed of the car
 car_speed = 0
 
-car_direction = 0;
+car_direction = 0
 
 # create a clock object to regulate the framerate
 clock = pygame.time.Clock()
 
 car_rect = pygame.Rect(car_x, car_y, car_width, car_height)
 
-def lines_touching(Lines, feelers, index1, index2):
-    """Checks if two lines from a Lines[] array are touching and returns the point of intersection if they are not parallel"""
-   # print(f"LINES!!")
-   # print(Lines[index1][0])
-    x1, y1 = Lines[index1][0]
-    x2, y2 = Lines[index1][1]
-  #  print(feelers)
-    x3, y3 = feelers[index2][0]
-    x4, y4 = feelers[index2][1]
+def calculateLength(car_pos, direction, offset):
 
-   # print(x1, y1, x2, y2)
-  #  print(x3, y3, x4, y4)
-    # Check if one or both lines are vertical
-    if x2 - x1 == 0 and x4 - x3 == 0:
-     #   print(f"Both lines are vertical and parallel, so they do not intersect")
-        return False, None
-    elif x2 - x1 == 0:
-      #  print(f"First line is vertical")
-        slope2 = (y4 - y3) / (x4 - x3)
-        x_intersect = x1
-        y_intersect = slope2 * (x_intersect - x3) + y3
-    elif x4 - x3 == 0:
-      #  print(f"Second line is vertical")
-        slope1 = (y2 - y1) / (x2 - x1)
-        x_intersect = x3
-        y_intersect = slope1 * (x_intersect - x1) + y1
-        print(x_intersect, y_intersect)
 
-    else:
-       # print(f" Calculate slopes")
-        slope1 = (y2 - y1) / (x2 - x1)
-        slope2 = (y4 - y3) / (x4 - x3)
 
-      #  print(f" Check if slopes are equal")
-        if slope1 == slope2:
-       #     print(f"Check if lines are overlapping")
-            if (x1 <= x3 <= x2 or x1 <= x4 <= x2 or x3 <= x1 <= x4 or x3 <= x2 <= x4) and \
-               (y1 <= y3 <= y2 or y1 <= y4 <= y2 or y3 <= y1 <= y4 or y3 <= y2 <= y4):
-       #         print(f"Lines do do overlap")
-                return True, None
-            else:
-                return False, None
-        else:
-        ##    print(f" Calculate point of intersection")
-            x_intersect = ((y3 - y1) + (slope1 * x1 - slope2 * x3)) / (slope1 - slope2)
-            y_intersect = slope1 * (x_intersect - x1) + y1
+    angle_radians = math.radians(direction+offset)
 
-        # Check if point of intersection lies on both lines
-        if (x1 <= x_intersect <= x2 or x2 <= x_intersect <= x1) and \
-           (x3 <= x_intersect <= x4 or x4 <= x_intersect <= x3) and \
-           (y1 <= y_intersect <= y2 or y2 <= y_intersect <= y1) and \
-           (y3 <= y_intersect <= y4 or y4 <= y_intersect <= y3):
-            return True, (x_intersect, y_intersect)
 
-  #  print(f"Checking Intecepts")
+    # calculate the x and y endoints of each line
+    length = 4000
+    x1 = car_pos[0]
+    y1 = car_pos[1]
 
-    if (x1 <= x_intersect <= x2 or x2 <= x_intersect <= x1) and \
-           (x3 <= x_intersect <= x4 or x4 <= x_intersect <= x3) and \
-           (y1 <= y_intersect <= y2 or y2 <= y_intersect <= y1) and \
-           (y3 <= y_intersect <= y4 or y4 <= y_intersect <= y3):
-            return True, (x_intersect, y_intersect)
-    else:
+    x2 = math.sin(angle_radians) * length
+    y2 = math.cos(angle_radians) * length
 
-        return False, None
-def getColissions(feelers, walls):
-    index1 = 0;
+    #find the intectepts between lines should they exist
 
-    for feeler in feelers:
-        index2 = 0;
-        for wall in walls:
-            #print(feeler ,f"WALL  - - " , wall)
-            result, intercept = lines_touching(walls, feelers, index2, index1)
-            if result:
-               # print (feelers[index1][1])
-                #print(intercept)
-                feelers_list = [[[value for value in subsubtuple] for subsubtuple in subtuple] for subtuple in feelers]
+    for i in range(0, len(map_boundaries)):
+        #Check if the lines intersect
+        x3 = map_boundaries[i][0][0]
+        y3 = map_boundaries[i][0][1]
+        x4 = map_boundaries[i][1][0]
+        y4 = map_boundaries[i][1][1]
 
-                feelers_list[index1][1] = intercept
-                tuple(tuple(tuple(value for value in subsublist) for subsublist in subtuple) for subtuple in feelers_list)
-                feelers = tuple(feelers_list)
-            index2 += 1
-        index1 += 1
-    return feelers
+        if(x1==x2):
+            m1 = (y2-y1)/(x2-x1)
+            m2 = (y4-y3)/(x4-x3)
+
+            intersection_y = y1 + m1*(x3-x1)
+
+    
+
+
 def drawMap():
 
 
@@ -201,16 +140,20 @@ line1 = 0
 line2 = 0
 car_position = (car_x, car_y)
 
-feelers  = [(car_position, calculateFeeler(car_position, car_direction, 0)),
-            (car_position, calculateFeeler(car_position, car_direction, 90)),
-            (car_position, calculateFeeler(car_position, car_direction, -90)),
-            (car_position, calculateFeeler(car_position, car_direction, 45)),
-            (car_position, calculateFeeler(car_position, car_direction, -45)),
-            (car_position, calculateFeeler(car_position, car_direction, 22.5)),
-            (car_position, calculateFeeler(car_position, car_direction, -22.5))
-            ]
+numfeelers = 100
 
-result, intersection = lines_touching(map_boundaries,feelers, line1, line2)
+feelers  = [0]*numfeelers
+LIDAR = [0]*numfeelers
+
+for i in range(numfeelers): 
+        LIDAR[i] = [calculateLength(car_position, car_direction, i*(360/numfeelers)), i*(360/numfeelers)]
+        feelers[i] = ((car_position, calculateFeeler(car_position, car_direction, i*(360/numfeelers))))
+        
+
+for i in range(numfeelers):   
+    print(feelers) 
+
+result, intersection = lines_touching(map_boundaries, feelers, line1, line2)
 
 
 
@@ -238,15 +181,44 @@ while True:
     # get the state of the arrow keys
     keys = pygame.key.get_pressed()
 
-    accelaration = 0.1
+    accelaration = 1
     turning  = 1
     breaking = 0.8
 
     # move the car based on the arrow keys
+
+    if keys[pygame.K_0]:
+        car_speed = 0
+    if keys[pygame.K_1]:
+        car_speed = 1
+    if keys[pygame.K_2]:
+        car_speed = 2
+    if keys[pygame.K_3]:
+        car_speed = 3
+    if keys[pygame.K_4]:
+        car_speed = 4
+    if keys[pygame.K_5]:
+        car_speed = 5
+    if keys[pygame.K_6]:
+        car_speed = 6
+    if keys[pygame.K_7]:
+        car_speed = 7
+    if keys[pygame.K_8]:
+        car_speed = 8
+    if keys[pygame.K_9]:
+        car_speed = 9
+
     if keys[pygame.K_w]:
          car_speed+=accelaration
+         print(car_speed)
+
+       
+
     if keys[pygame.K_s]:
         car_speed-= accelaration
+        print(car_speed)
+
+             
     if keys[pygame.K_a]:
         car_direction -= turning*car_speed
     if keys[pygame.K_d]:
@@ -260,7 +232,7 @@ while True:
             car_speed = 0
 
 
-
+    
     # draw the car
 
 
@@ -278,14 +250,10 @@ while True:
     car_x = carData[0]
     car_y = carData[1]
 
-
-    feelers[0] = (car_position, calculateFeeler(car_position, car_direction, 0))
-    feelers[1] = (car_position, calculateFeeler(car_position, car_direction, 90))
-    feelers[2] = (car_position, calculateFeeler(car_position, car_direction, -90))
-    feelers[3] = (car_position, calculateFeeler(car_position, car_direction, 22.5))
-    feelers[4] = (car_position, calculateFeeler(car_position, car_direction, -22.5))
-    feelers[5] = (car_position, calculateFeeler(car_position, car_direction, 45))
-    feelers[6] = (car_position, calculateFeeler(car_position, car_direction, -45))
+    for i in range(numfeelers): 
+        feelers[i] = (car_position, calculateFeeler(car_position, car_direction, i*(360/numfeelers)))
+    
+    
 
     result, intersection = lines_touching(map_boundaries, feelers, line1, line2)
 
